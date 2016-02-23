@@ -30,8 +30,7 @@ module ActionView
   class MissingTemplate < ActionViewError #:nodoc:
     attr_reader :path
 
-    def initialize(paths, path, prefixes, partial, details, *)
-      @path = path
+    def self.from_failed_lookup(paths, path, prefixes, partial, details, *)
       prefixes = Array(prefixes)
       template_type = if partial
         "partial"
@@ -48,7 +47,13 @@ module ActionView
 
       out  = "Missing #{template_type} #{searched_paths.join(", ")} with #{details.inspect}. Searched in:\n"
       out += paths.compact.map { |p| "  * #{p.to_s.inspect}\n" }.join
-      super out
+
+      new(out, path)
+    end
+
+    def initialize(message, path)
+      super(message)
+      @path = path
     end
   end
 

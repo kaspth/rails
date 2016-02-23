@@ -43,11 +43,11 @@ module ActionView #:nodoc:
     end
 
     def find(*args)
-      find_all(*args).first || raise(MissingTemplate.new(self, *args))
+      find_all(*args).first || raise(MissingTemplate.from_failed_lookup(self, *args))
     end
 
     def find_file(path, prefixes = [], *args)
-      _find_all(path, prefixes, args, true).first || raise(MissingTemplate.new(self, path, prefixes, *args))
+      _find_all(path, prefixes, args, true).first || raise(MissingTemplate.from_failed_lookup(self, path, prefixes, *args))
     end
 
     def find_all(path, prefixes = [], *args)

@@ -922,7 +922,7 @@ module ActionMailer
     def each_template(paths, name, &block)
       templates = lookup_context.find_all(name, paths)
       if templates.empty?
-        raise ActionView::MissingTemplate.new(paths, name, paths, false, 'mailer')
+        raise ActionView::MissingTemplate.from_failed_lookup(paths, name, paths, false, 'mailer')
       else
         templates.uniq(&:formats).each(&block)
       end

@@ -48,7 +48,7 @@ class DebugExceptionsTest < ActionDispatch::IntegrationTest
           raise ActionView::Template::Error.new('template')
         end
       when "/missing_template"
-        raise ActionView::MissingTemplate.new(%w(foo), 'foo/index', %w(foo), false, 'mailer')
+        raise ActionView::MissingTemplate.from_failed_lookup(%w(foo), 'foo/index', %w(foo), false, 'mailer')
       when "/bad_request"
         raise ActionController::BadRequest
       when "/missing_keys"
