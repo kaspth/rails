@@ -251,7 +251,7 @@ module RenderTestCases
   end
 
   def test_render_sub_template_with_errors
-    e = assert_raises(ActionView::Template::Error) { @view.render(template: "test/sub_template_raise") }
+    e = assert_raises(ActionView::Template::Error) { @view.render(:template => "test/sub_template_raise") }
     assert_match %r!method.*doesnt_exist!, e.message
     assert_equal "Trace of template inclusion: #{File.expand_path("#{FIXTURE_LOAD_PATH}/test/sub_template_raise.html.erb")}", e.sub_template_message
     assert_equal "1", e.line_number
@@ -665,6 +665,7 @@ class CachedCollectionViewRenderTest < ActiveSupport::TestCase
     ActionView::PartialRenderer.collection_cache = ActiveSupport::Cache::MemoryStore.new
 
     setup_view(view_paths)
+    @view.prefix_partial_path_with_controller_namespace = false
   end
 
   teardown do
@@ -673,38 +674,42 @@ class CachedCollectionViewRenderTest < ActiveSupport::TestCase
   end
 
   test "collection caching does not cache by default" do
-    customer = Customer.new("david", 1)
-    key = cache_key(customer, "test/_customer")
+    scope_partial_path(Customer.new("david", 1), to: 'test/customer') do |customer|
+      key = cache_key(customer, "test/_customer")
 
-    ActionView::PartialRenderer.collection_cache.write(key, "Cached")
+      ActionView::PartialRenderer.collection_cache.write(key, 'Cached')
 
-    assert_not_equal "Cached",
-      @view.render(partial: "test/customer", collection: [customer])
+      assert_not_equal "Cached", @view.render([customer])
+    end
   end
 
   test "collection caching with partial that doesn't use fragment caching" do
-    customer = Customer.new("david", 1)
-    key = cache_key(customer, "test/_customer")
+    scope_partial_path(Customer.new("david", 1), to: 'test/customer') do |customer|
+      key = cache_key(customer, "test/_customer")
 
-    ActionView::PartialRenderer.collection_cache.write(key, "Cached")
+      ActionView::PartialRenderer.collection_cache.write(key, 'Cached')
 
-    assert_equal "Cached",
-      @view.render(partial: "test/customer", collection: [customer], cached: true)
+      assert_equal "Cached", @view.render([customer], cached: true)
+    end
   end
 
   test "collection caching with cached true" do
-    customer = CachedCustomer.new("david", 1)
-    key = cache_key(customer, "test/_cached_customer")
+    scope_partial_path(CachedCustomer.new("david", 1), to: 'test/cached_customer') do |customer|
+      key = cache_key(customer, "test/_cached_customer")
 
-    ActionView::PartialRenderer.collection_cache.write(key, "Cached")
+      ActionView::PartialRenderer.collection_cache.write(key, 'Cached')
 
-    assert_equal "Cached",
-      @view.render(partial: "test/cached_customer", collection: [customer], cached: true)
+      assert_equal "Cached", @view.render([customer], cached: true)
+    end
   end
 
   private
     def cache_key(*names, virtual_path)
       digest = ActionView::Digestor.digest name: virtual_path, finder: @view.lookup_context, dependencies: []
       @view.fragment_cache_key([ *names, digest ])
+    end
+
+    def scope_partial_path(model, to:)
+      model.stub(:to_partial_path, to) { yield model }
     end
 end

@@ -133,7 +133,7 @@ module ActionView
       #
       # For collections rendered such:
       #
-      #   <%= render partial: 'projects/project', collection: @projects, cached: true %>
+      #   <%= render @projects, cached: true %>
       #
       # The `cached: true` will make Action View's rendering read several templates
       # from cache at once instead of one call per template.

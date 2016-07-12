@@ -20,6 +20,8 @@ module ActionView
       # * <tt>:body</tt> - Renders the text passed in, and inherits the content
       #   type of <tt>text/plain</tt> from <tt>ActionDispatch::Response</tt>
       #   object.
+      # * <tt>:cached</tt> - Whether or not to cache the rendering of a collection.
+      #   See <tt>ActionView::CacheHelper#cache</tt> for more.
       #
       # If no options hash is passed or :update specified, the default is to render a partial and use the second parameter
       # as the locals hash.
@@ -32,7 +34,7 @@ module ActionView
             view_renderer.render(self, options)
           end
         else
-          view_renderer.render_partial(self, partial: options, locals: locals, &block)
+          view_renderer.render_partial(self, partial: options, cached: locals.delete(:cached), locals: locals, &block)
         end
       end
 
