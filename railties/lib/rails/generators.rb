@@ -17,8 +17,7 @@ require "active_support/core_ext/string/inflections"
 
 module Rails
   module Generators
-    include Rails::Command::Behavior
-
+    autoload :Behavior,        "rails/generators/behavior"
     autoload :Actions,         "rails/generators/actions"
     autoload :ActiveModel,     "rails/generators/active_model"
     autoload :Base,            "rails/generators/base"
@@ -26,6 +25,8 @@ module Rails
     autoload :NamedBase,       "rails/generators/named_base"
     autoload :ResourceHelpers, "rails/generators/resource_helpers"
     autoload :TestCase,        "rails/generators/test_case"
+
+    include Behavior
 
     mattr_accessor :namespace
 
