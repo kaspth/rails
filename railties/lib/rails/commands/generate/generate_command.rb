@@ -2,29 +2,19 @@
 
 require "rails/generators"
 
-module Rails
-  module Command
-    class GenerateCommand < Base # :nodoc:
-      no_commands do
-        def help
-          require_application_and_environment!
-          load_generators
+class Rails::Commands::GenerateCommand < ActiveCommand::Base # :nodoc:
+  help do
+    Rails::Generators.help self.class.command_name
+  end
 
-          Rails::Generators.help self.class.command_name
-        end
-      end
+  argument :generator
 
-      def perform(*)
-        generator = args.shift
-        return help unless generator
+  before_command :load_generators
+  before_command { run :help unless generator }
 
-        require_application_and_environment!
-        load_generators
+  def perform
+    ARGV.shift
 
-        ARGV.shift
-
-        Rails::Generators.invoke generator, args, behavior: :invoke, destination_root: Rails::Command.root
-      end
-    end
+    Rails::Generators.invoke generator, args, behavior: :invoke, destination_root: ActiveCommand.root
   end
 end
