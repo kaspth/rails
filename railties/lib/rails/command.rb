@@ -28,49 +28,64 @@ module Rails
         ENV["RAILS_ENV"].presence || ENV["RACK_ENV"].presence || "development"
       end
 
-      # Receives a namespace, arguments and the behavior to invoke the command.
-      def invoke(full_namespace, args = [], **config)
-        namespace = full_namespace = full_namespace.to_s
-
-        if char = namespace =~ /:(\w+)$/
-          command_name, namespace = $1, namespace.slice(0, char)
-        else
-          command_name = namespace
+      class Invocation
+        def initialize(lookup)
+          @lookup  = lookup
+          @nesting = lookup.split(":")
         end
 
-        command_name, namespace = "help", "help" if command_name.blank? || HELP_MAPPINGS.include?(command_name)
-        command_name, namespace = "version", "version" if %w( -v --version ).include?(command_name)
+        def namespace
+          @lookup
+        end
 
-        command = find_by_namespace(namespace, command_name)
-        if command && command.all_commands[command_name]
-          command.perform(command_name, args, config)
+        def command
+          case command = @nesting.last.presence
+          when "-v", "--version"
+            "version"
+          when nil, *HELP_MAPPINGS
+            "help"
+          else
+            command
+          end
+        end
+
+        def lookups
+          [ @lookup ]
+        end
+
+        def lookup_paths
+          lookups.map { |l| l.tr(":", "/") } + [ "#{command}/#{command}" ]
+        end
+
+        # def command
+        #   Rails::Command.send(:lookup_paths).dig(@nesting)
+        # end
+        #
+        # def perform
+        #   command.send(command_name)
+        # end
+      end
+
+      # Receives a namespace, arguments and the behavior to invoke the command.
+      def invoke(full_namespace, args = [], **config)
+        require "byebug"; byebug
+
+        invocation = Invocation.new(full_namespace.to_s)
+
+        command = find_command(invocation)
+        if command && command.all_commands[invocation.command]
+          command.perform(invocation.command, args, config)
         else
-          find_by_namespace("rake").perform(full_namespace, args, config)
+          find_command("rake").perform(full_namespace, args, config)
         end
       end
 
-      # Rails finds namespaces similar to Thor, it only adds one rule:
-      #
-      # Command names must end with "_command.rb". This is required because Rails
-      # looks in load paths and loads the command just before it's going to be used.
-      #
-      #   find_by_namespace :webrat, :rails, :integration
-      #
-      # Will search for the following commands:
-      #
-      #   "rails:webrat", "webrat:integration", "webrat"
-      #
-      # Notice that "rails:commands:webrat" could be loaded as well, what
-      # Rails looks for is the first and last parts of the namespace.
-      def find_by_namespace(namespace, command_name = nil) # :nodoc:
-        lookups = [ namespace ]
-        lookups << "#{namespace}:#{command_name}" if command_name
-        lookups.concat lookups.map { |lookup| "rails:#{lookup}" }
+      def find_command(invocation)
+        lookup(invocation.lookup_paths)
 
-        lookup(lookups)
-
-        namespaces = subclasses.index_by(&:namespace)
-        namespaces[(lookups & namespaces.keys).first]
+        indexed = subclasses.index_by(&:namespace)
+        huh = (invocation.lookups & indexed.keys).first
+        indexed[huh]
       end
 
       # Returns the root of the Rails engine or app running the command.

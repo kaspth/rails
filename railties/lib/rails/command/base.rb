@@ -39,7 +39,7 @@ module Rails
           if name
             super
           else
-            @namespace ||= super.chomp("_command").sub(/:command:/, ":")
+            @namespace ||= super.chomp("_command").sub(/rails:command:/, "")
           end
         end
 

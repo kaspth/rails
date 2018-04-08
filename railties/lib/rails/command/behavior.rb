@@ -8,11 +8,6 @@ module Rails
       extend ActiveSupport::Concern
 
       class_methods do
-        # Remove the color from output.
-        def no_color!
-          Thor::Base.shell = Thor::Shell::Basic
-        end
-
         # Track all command subclasses.
         def subclasses
           @subclasses ||= []
@@ -33,9 +28,7 @@ module Rails
 
           # Receives namespaces in an array and tries to find matching generators
           # in the load path.
-          def lookup(namespaces)
-            paths = namespaces_to_paths(namespaces)
-
+          def lookup(paths)
             paths.each do |raw_path|
               lookup_paths.each do |base|
                 path = "#{base}/#{raw_path}_#{command_type}"
@@ -64,20 +57,6 @@ module Rails
                 end
               end
             end
-          end
-
-          # Convert namespaces to paths by replacing ":" for "/" and adding
-          # an extra lookup. For example, "rails:model" should be searched
-          # in both: "rails/model/model_generator" and "rails/model_generator".
-          def namespaces_to_paths(namespaces)
-            paths = []
-            namespaces.each do |namespace|
-              pieces = namespace.split(":")
-              paths << pieces.dup.push(pieces.last).join("/")
-              paths << pieces.join("/")
-            end
-            paths.uniq!
-            paths
           end
       end
     end
